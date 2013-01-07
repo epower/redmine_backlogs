@@ -101,19 +101,33 @@ end
 class RbRelease < ActiveRecord::Base
   self.table_name = 'releases'
 
+  RELEASE_STATUSES = %w(open closed)
+  RELEASE_SHARINGS = %w(none descendants hierarchy tree system)
+
   unloadable
 
   belongs_to :project, :inverse_of => :releases
-  has_many :release_burndown_days, :dependent => :delete_all, :foreign_key => :release_id
   has_many :issues, :class_name => 'RbStory', :foreign_key => 'release_id', :dependent => :nullify
 
-  validates_presence_of :project_id, :name, :release_start_date, :release_end_date, :initial_story_points
+  validates_presence_of :project_id, :name, :release_start_date, :release_end_date
+  validates_inclusion_of :status, :in => RELEASE_STATUSES
+  validates_inclusion_of :sharing, :in => RELEASE_SHARINGS
   validates_length_of :name, :maximum => 64
   validate :dates_valid?
+
+  scope :open, :conditions => {:status => 'open'}
+  scope :closed, :conditions => {:status => 'closed'}
+  scope :visible, lambda {|*args| { :include => :project,
+                                    :conditions => Project.allowed_to_condition(args.first || User.current, :view_releases) } }
+
 
   include Backlogs::ActiveRecord::Attributes
 
   def to_s; name end
+
+  def closed?
+    status == 'closed'
+  end
 
   def dates_valid?
     errors.add(:base, l(:error_release_end_after_start)) if self.release_start_date >= self.release_end_date if self.release_start_date and self.release_end_date
@@ -139,10 +153,6 @@ class RbRelease < ActiveRecord::Base
     issues.joins(:fixed_version).includes(:fixed_version).order('versions.effective_date').group_by(&:fixed_version_id)
   end
 
-  def burndown_days
-    self.release_burndown_days.sort { |a,b| a.day <=> b.day }
-  end
-
   def days(cutoff = nil)
     # assumes mon-fri are working days, sat-sun are not. this
     # assumption is not globally right, we need to make this configurable.
@@ -152,7 +162,7 @@ class RbRelease < ActiveRecord::Base
 
   def has_burndown?
 #merge: is it neccessary to have closed sprints for burndown? I'd like to see it immediately
-    return !!(self.release_start_date and self.release_end_date and self.initial_story_points && !self.closed_sprints.nil?)
+    return !!(self.release_start_date and self.release_end_date && !self.closed_sprints.nil?)
   end
 
   def burndown
@@ -172,7 +182,7 @@ class RbRelease < ActiveRecord::Base
   end
 
   def allowed_sharings(user = User.current)
-    Version::VERSION_SHARINGS.select do |s|
+    RELEASE_SHARINGS.select do |s|
       if sharing == s
         true
       else
@@ -191,7 +201,26 @@ class RbRelease < ActiveRecord::Base
     end
   end
 
-  scope :visible, lambda {|*args| { :include => :project,
-                                    :conditions => Project.allowed_to_condition(args.first || User.current, :view_releases) } }
+  #migrate old date-based releases to relation-based
+  def self.integrate_implicit_stories
+    unless RbStory.trackers
+      puts "Redmine not configured, skipping release migratinos"
+      return
+    end
+    #each release from newest to oldest
+    RbRelease.order('release_end_date desc').each do |release|
+      release.project.versions.select{ |v| v.due_date && (v.due_date>=release.release_start_date && v.due_date<=release.release_end_date)
+      }.each do |version|
+        #each sprint that lies within the release
+        version.fixed_issues.where('tracker_id in (?)', RbStory.trackers).each { |issue|
+          #each issue in that version which is a story and does not belong to a release, yet
+          if issue.release_id.nil?
+            issue.release = release;
+            issue.save!
+          end
+        }
+      end #sprints
+    end #releases
+  end
 
 end

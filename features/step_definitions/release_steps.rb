@@ -68,10 +68,10 @@ Then /^release "([^"]*)" should have (\d+) story points$/ do |release, points|
   release.remaining_story_points.should == points.to_f
 end
 
-Then /^release "([^"]*)" should have (\d+) initial story points$/ do |release, points|
+Then /^The release "([^"]*)" should be closed$/ do |release|
   release = RbRelease.find_by_name(release)
-  release.should_not be_nil
-  release.initial_story_points.should == points.to_f
+  release.status.should == 'closed'
+  release.closed?.should be_true
 end
 
 Given /^I have made the following story mutations:$/ do |table|
