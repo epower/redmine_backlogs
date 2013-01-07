@@ -2,18 +2,10 @@
 language: ruby
 release: 0.9.32
 services:
-- mysql
 - postgresql
 rvm:
 - 1.9.3
-- 1.8.7
 env:
-- REDMINE_VER=2.0.4 DB=mysql
-- REDMINE_VER=2.1.5 DB=mysql
-- REDMINE_VER=2.2.0 DB=mysql
-- REDMINE_VER=2.0.4 DB=sqlite
-- REDMINE_VER=2.1.5 DB=sqlite
-- REDMINE_VER=2.2.0 DB=sqlite
 - REDMINE_VER=2.0.4 DB=postgresql
 - REDMINE_VER=2.1.5 DB=postgresql
 - REDMINE_VER=2.2.0 DB=postgresql
@@ -50,7 +42,8 @@ script:
 - bash -x ./redmine_install.sh -t features/duplicate_story.feature
 - bash -x ./redmine_install.sh -t features/extended_timelog.feature
 - bash -x ./redmine_install.sh -t features/product_owner.feature
-- bash -x ./redmine_install.sh -t features/release.feature
+- bash -x ./redmine_install.sh -t features/release3.feature
+- bash -x ./redmine_install.sh -t features/release_backlogs.feature
 - bash -x ./redmine_install.sh -t features/routes.feature
 - bash -x ./redmine_install.sh -t features/scrum_master.feature
 - bash -x ./redmine_install.sh -t features/settings.feature
