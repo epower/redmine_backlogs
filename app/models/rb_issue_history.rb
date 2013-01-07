@@ -37,6 +37,32 @@ class RbIssueHistory < ActiveRecord::Base
     return filtered
   end
 
+  def filter_release(days)
+    h = Hash[*(self.expand.collect{|d| [d[:date], d]}.flatten)]
+    #if we have no day matching, find one earlier to get the latest status
+    filtered = days.collect{|d| 
+      while !h[d] && d > days[0]
+        if d > days[-1]
+          d = days[-1]
+        else
+          d = d.yesterday
+        end
+      end
+      h[d] ? h[d] : {:date => d, :origin => :filter}
+    }
+    
+    # see if this issue was closed after last day
+    if filtered[-1][:status_open]
+      self.history.select{|h| h[:date] > days[-1]}.each{|h|
+        if !h[:status_open]
+          filtered[-1] = h
+          break
+        end
+      }
+    end
+    return filtered
+  end
+
   def self.issue_type(tracker_id)
     return nil if tracker_id.nil? || tracker_id == ''
     tracker_id = tracker_id.to_i

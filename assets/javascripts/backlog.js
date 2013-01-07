@@ -39,7 +39,10 @@ RB.Backlog = RB.Object.create({
                   });
 
     if(this.isSprintBacklog()){
-      sprint = RB.Factory.initialize(RB.Sprint, this.getSprint());
+      RB.Factory.initialize(RB.Sprint, this.getSprint());
+    }
+    else if (this.isReleaseBacklog()) {
+      RB.Factory.initialize(RB.Sprint, this.getRelease());
     }
 
     this.drawMenu();
@@ -65,8 +68,14 @@ RB.Backlog = RB.Object.create({
     var menu = this.$.find('ul.items');
     var id = null;
     var self = this;
+    var ajaxdata = {};
     if (this.isSprintBacklog()) {
       id = this.getSprint().data('this').getID();
+      ajaxdata = { sprint_id: id };
+    }
+    else if (this.isReleaseBacklog()) {
+      id = this.getRelease().data('this').getID();
+      ajaxdata = { release_id: id };
     }
     if (id == '') { return; } // template sprint
 
@@ -91,9 +100,10 @@ RB.Backlog = RB.Object.create({
       }
     };
 
+    
     RB.ajax({
       url: RB.routes.backlog_menu,
-      data: (id ? { sprint_id: id } : {}),
+      data: ajaxdata,
       dataType: 'json',
       success   : function(data,t,x) {
         createMenu(data, menu);
@@ -202,6 +212,10 @@ RB.Backlog = RB.Object.create({
     return RB.$(this.el).find(".model.sprint").first();
   },
     
+  getRelease: function(){
+    return RB.$(this.el).find(".model.release").first();
+  },
+    
   getStories: function(){
     return this.getList().children(".story");
   },
@@ -231,6 +245,10 @@ RB.Backlog = RB.Object.create({
 
   isSprintBacklog: function(){
     return RB.$(this.el).find('.sprint').length == 1; // return true if backlog has an element with class="sprint"
+  },
+    
+  isReleaseBacklog: function(){
+    return RB.$(this.el).find('.release').length == 1; // return true if backlog has an element with class="release"
   },
     
   newStory: function(project_id) {
