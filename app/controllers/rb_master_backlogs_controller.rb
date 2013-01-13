@@ -32,30 +32,41 @@ class RbMasterBacklogsController < RbApplicationController
     end
   end
 
-  def menu
+  def _menu_new
     links = []
+    label_new = :label_new_story
+    add_class = 'add_new_story'
 
     if @settings[:sharing_enabled]
       # FIXME: (pa sharing) usability is bad, menu is inconsistent. Sometimes we have a submenu with one entry, sometimes we have non-sharing behavior without submenu
-      unless @sprint #menu for product backlog
-        projects = @project.projects_in_shared_product_backlog
-      else #menu for sprint
+      if @sprint #menu for sprint
         projects = @sprint.shared_to_projects(@project)
+      elsif @release #menu for release
+        projects = @release.shared_to_projects(@project)
+      else #menu for product backlog
+        projects = @project.projects_in_shared_product_backlog
       end
       #make the submenu or single link
       if !projects.empty?
         if projects.length > 1
-          links << {:label => l(:label_new_story), :url => '#', :sub => []}
+          links << {:label => l(label_new), :url => '#', :sub => []}
           projects.each{|project|
-            links.first[:sub] << {:label => project.name, :url => '#', :classname => "add_new_story project_id_#{project.id}"}
+            links.first[:sub] << {:label => project.name, :url => '#', :classname => "#{add_class} project_id_#{project.id}"}
           }
         else
-          links << {:label => l(:label_new_story), :url => '#', :classname => "add_new_story project_id_#{projects[0].id}"}
+          links << {:label => l(label_new), :url => '#', :classname => "#{add_class} project_id_#{projects[0].id}"}
         end
       end
     else #no sharing, only own project in the menu
-      links << {:label => l(:label_new_story), :url => '#', :classname => 'add_new_story'}
+      links << {:label => l(label_new), :url => '#', :classname => add_class}
     end
+    return links
+  end
+
+  def menu
+    links = []
+
+    links += _menu_new
 
     links << {:label => l(:label_new_sprint), :url => '#', :classname => 'add_new_sprint'
              } unless @sprint
