@@ -154,10 +154,21 @@ RB.Backlog = RB.Object.create({
       }
     }
 
+    //disable release backlogs
+    RB.$('#product_backlog_container .release_backlog .stories').sortable('disable');
+    if (RB.constants.project_releases[storyProject]) {
+      for (var i = 0; i < RB.constants.project_releases[storyProject].length; i++) {
+        RB.$('#stories-for-release-' + RB.constants.project_releases[storyProject][i]).sortable('enable');
+      }
+    }
+
     //disable product backlog if the dragged story is not in self or descendants
     if (!RB.constants.projects_in_product_backlog[storyProject]) {
-      RB.$('#product_backlog_container .stories').sortable('disable');
+      RB.$('#product_backlog_container .product_backlog .stories').sortable('disable');
     }
+
+    //get the ui hint up to the header
+    RB.$('.ui-sortable-disabled').parent('.backlog').addClass('rb-sortable-disabled');
   },
 
   mouseUp: function(event) {
@@ -206,6 +217,7 @@ RB.Backlog = RB.Object.create({
   enableAllSortables: function() {
     // enable all backlogs as drop targets
     RB.$('.stories').sortable('enable');
+    RB.$('.rb-sortable-disabled').removeClass('rb-sortable-disabled');
   },
 
   getSprint: function(){
