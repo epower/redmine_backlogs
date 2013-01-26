@@ -1,3 +1,12 @@
+<%# we use a helper of our controller since we cannot inject content_for blocks into the hook which is rendering our javascript %>
+<%- controller.rb_jquery_plugins = capture do %>
+  <%= javascript_include_tag(
+    'jquery/jquery.jqplot/plugins/jqplot.barRenderer.min.js',
+    'jquery/jquery.jqplot/plugins/jqplot.categoryAxisRenderer.min.js',
+    :plugin => 'redmine_backlogs')
+  %>
+<%- end %>
+
 <style type="text/css">
 tr.closed {text-decoration: line-through;}
 .sprint {margin-bottom: 2em;}
@@ -13,15 +22,16 @@ h3.version {font-size: 14px; background: none; padding-left:0;}
 
 <p><%= @release.description %></p>
 
+<% if false %><!-- FIXME Disabled for now -->
 <h3>Release Burndown</h3>
 <!--Release Burndown Visualization-->
 <% unless @release.has_burndown? %>
   <p class="nodata">No burndown available</p>
 <% else %>
-  <% if false %><!-- FIXME Disabled for now -->
     <%= render :partial => "rb_release_burndown_charts/burndown", :locals => { :release => @release, :style => "margin-left:0px; margin-top:20px;"} %>
-  <% end %>
   <br />
+<% end %>
+<% end %>
 
 <!--Visualization of related sprints -->
 <!--TODO: i18n-->
@@ -71,7 +81,6 @@ h3.version {font-size: 14px; background: none; padding-left:0;}
     <%= f.link_to 'CSV', :url => { :release_id => @release } %>
   <% end %>
   <br />
-<% end %>
 
 <% content_for :sidebar do %>
   <h3><%= l(:label_release) %></h3>

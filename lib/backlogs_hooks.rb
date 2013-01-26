@@ -45,19 +45,16 @@ module BacklogsPlugin
             :project_id => project.identifier
           }
           url_options[:sprint_id] = sprint_id if sprint_id
-          if Rails::VERSION::MAJOR < 3
-            url = '' #actionpack-2.3.14/lib/action_controller/url_rewriter.rb is injecting relative_url_root
-          else
-            url = Redmine::Utils.relative_url_root #actionpack-3* is not???
-          end
+          url = url_for_prefix_in_hooks
           url += url_for(url_options)
 
           # Why can't I access protect_against_forgery?
           return %{
             <div id="backlogs_view_issues_sidebar"></div>
             <script type="text/javascript">
-              jQuery(document).ready(function() {
-                jQuery('#backlogs_view_issues_sidebar').load('#{url}');
+              var $j = RB.$ || $;
+              $j(function($) {
+                $('#backlogs_view_issues_sidebar').load('#{url}');
               });
             </script>
           }
@@ -129,17 +126,15 @@ module BacklogsPlugin
             end
 
             if issue.descendants.length != 0 && !issue.new_record?
-              snippet += javascript_include_tag 'jquery/jquery-1.6.2.min.js', :plugin => 'redmine_backlogs'
               snippet += <<-generatedscript
 
                 <script type="text/javascript">
-                  var $j = jQuery.noConflict();
-
-                  $j(document).ready(function() {
-                    $j('#issue_estimated_hours').attr('disabled', 'disabled');
-                    $j('#issue_done_ratio').attr('disabled', 'disabled');
-                    $j('#issue_start_date').parent().hide();
-                    $j('#issue_due_date').parent().hide();
+                  var $j = RB.$ || $;
+                  $j(function($) {
+                    $('#issue_estimated_hours').attr('disabled', 'disabled');
+                    $('#issue_done_ratio').attr('disabled', 'disabled');
+                    $('#issue_start_date').parent().hide();
+                    $('#issue_due_date').parent().hide();
                   });
                 </script>
               generatedscript
@@ -202,18 +197,21 @@ module BacklogsPlugin
 
           if User.current.allowed_to?(:edit_wiki_pages, project)
             snippet += '<span id="edit_wiki_page_action">'
-            snippet += link_to l(:button_edit_wiki), {:controller => 'rb_wikis', :action => 'edit', :project_id => project.id, :sprint_id => version.id }, :class => 'icon icon-edit'
+            snippet += link_to l(:button_edit_wiki), 
+                      url_for_prefix_in_hooks + url_for({:controller => 'rb_wikis', :action => 'edit', :sprint_id => version.id }),
+                      :class => 'icon icon-edit'
             snippet += '</span>'
 
             # this wouldn't be necesary if the schedules plugin
             # didn't disable the contextual hook
-            snippet += javascript_include_tag 'jquery/jquery-1.6.2.min.js', :plugin => 'redmine_backlogs'
             snippet += <<-generatedscript
 
               <script type="text/javascript">
-                  var $j = jQuery.noConflict();
-                $j(document).ready(function() {
-                  $j('#edit_wiki_page_action').detach().appendTo("div.contextual");
+                var $j = RB.$ || $;
+                $j(function($) {
+                  $('#edit_wiki_page_action').detach().appendTo("div.contextual");
+                  //hide the redmine 'edit associated wiki page' if it exists, so we only have our button consistently.
+                  if ('#{version.wiki_page_title}' !== '') $(".contextual a.icon-edit:contains('#{version.wiki_page_title}')").hide()
                 });
               </script>
             generatedscript
@@ -310,7 +308,9 @@ module BacklogsPlugin
           end
         end
 
-        return context[:controller].send(:render_to_string, {:locals => context}.merge(:partial=> 'hooks/rb_include_scripts'))
+        return context[:controller].send(:render_to_string, {
+          :locals => context,
+          :partial=> 'hooks/rb_include_scripts'})
       end
 
       def view_timelog_edit_form_bottom(context={ })

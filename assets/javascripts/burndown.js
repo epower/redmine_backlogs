@@ -1,13 +1,13 @@
-if (RB == null) { var RB = {}; }
-if (RB.burndown == null) { RB.burndown = {options: {}, charts: {}}; }
+if (typeof RB.burndown == "undefined") { RB.burndown = {options: {}, charts: {}}; }
 
 RB.burndown.options.disabled_series = function(new_value) {
-  if (new_value == undefined) {
+  if (new_value === undefined) {
     var v = RB.UserPreferences.get('disabled_burndown_series', true);
-    if (!v || jQuery.inArray(',', v) == -1) { v = ''; }
+    if (!v || RB.$.inArray(',', v) == -1) { v = ''; }
     return v.split(',');
   } else {
     RB.UserPreferences.set('disabled_burndown_series', new_value.join(','), true);
+    return new_value;
   }
 };
 RB.burndown.options.show_legend = function() {
@@ -20,6 +20,14 @@ RB.burndown.initialize = function() {
   var id, chart;
   for (id in RB.burndown.charts) {
     chart = RB.burndown.charts[id];
+    if (chart.mode != 'full') {
+      chart.options.axes.xaxis.show=false;
+      chart.options.axes.xaxis.showTicks=false;
+      chart.options.axes.y2axis.show=false;
+      chart.options.axes.y3axis.show=false;
+      chart.options.axes.yaxis.showLabel=false;
+      chart.options.axes.y2axis.showLabel=false;
+    }
     if (!chart.chart) {
       RB.$('#burndown_' + id).empty();
       chart.chart = RB.$.jqplot('burndown_' + id, chart.series, chart.options);
@@ -39,7 +47,7 @@ RB.burndown.redraw = function() {
 
     for (name in chart.position) {
       pos = chart.position[name];
-      chart.chart.series[pos].show = (jQuery.inArray(name, disabled) == -1);
+      chart.chart.series[pos].show = (RB.$.inArray(name, disabled) == -1);
     }
 
     if (legend == 'off') {
@@ -61,7 +69,7 @@ RB.burndown.change_legend = function(rb) {
 RB.burndown.change_series = function(cb) {
   var disabled = RB.burndown.options.disabled_series();
 
-  var i = jQuery.inArray(cb.value, disabled);
+  var i = RB.$.inArray(cb.value, disabled);
   if (i != -1) { disabled.splice(i, 1); }
   if (!cb.checked) { disabled.push(cb.value); }
   RB.burndown.options.disabled_series(disabled);
@@ -73,8 +81,11 @@ RB.burndown.configure = function() {
   var cb;
 
   RB.$.each(disabled, function(index, value) {
+    //here we get some weird expression error in jquery 1.6 as well as in 1.7
+    try {
     var cb = RB.$('#burndown_series_' + value);
     if (cb) { cb.attr('checked', false); }
+    } catch(e) {/*FIXME jquery Uncaught Syntax error, unrecognized expression: "*/}
   });
 
   var legend = RB.burndown.options.show_legend();
