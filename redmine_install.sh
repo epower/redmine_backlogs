@@ -162,8 +162,9 @@ set -e
 cd $PATH_TO_REDMINE
 echo current directory is `pwd`
 
-# create a link to the backlogs plugin
-ln -sf $PATH_TO_BACKLOGS $PATH_TO_PLUGINS/redmine_backlogs
+# create a link to the backlogs plugin, but avoid recursive link.
+if [ -L "$PATH_TO_PLUGINS/redmine_backlogs" ]; then rm "$PATH_TO_PLUGINS/redmine_backlogs"; fi
+ln -s "$PATH_TO_BACKLOGS" "$PATH_TO_PLUGINS/redmine_backlogs"
 
 # copy database.yml
 cp $WORKSPACE/database.yml config/
@@ -218,7 +219,6 @@ if [ "$DBTYPE" = "mysql" -a "$RUBYVER" = "1.8" ] ; then
   echo 'boing'
 fi
 
-#sed -i -e "s/require 'rake\/gempackagetask'/require 'rubygems\/package_task'/" -e 's/require "rake\/gempackagetask"/require "rubygems\/package_task"/' `find . -type f -exec grep -l 'require.*rake.gempackagetask' {} \;` README.rdoc
 sed -i -e 's/fail "GONE"/#fail "GONE"/' `find . -type f -exec grep -l 'fail "GONE"' {} \;` README.rdoc
 
 if [ "$VERBOSE" = "yes" ]; then echo 'Gems installed'; fi
