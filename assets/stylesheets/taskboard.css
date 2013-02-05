@@ -36,6 +36,7 @@ See RB.Taskboard.initialize()
 }
 
 #taskboard { position: relative; } /*for fixed header*/
+#impediments { padding-top: 40px; }
 /* status labels */
 #board_header{
   background-color:#EEEEEE;
