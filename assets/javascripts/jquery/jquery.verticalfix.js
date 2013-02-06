@@ -1,13 +1,12 @@
 /**
  * jquery.verticalfix.js
- * 2013 for redmine backlogs
+ * Copyright (c) 2013 redmine backlogs
+ *
+ * based on jquery.scrollfollow.js Copyright (c) 2008 Net Perspective (http://kitchen.net-perspective.com/)
+ * original author R.A. Ray
+ * Licensed under the MIT License (http://www.opensource.org/licenses/mit-license.php)
  *
  * @author Patrick Atamaniuk
- *
- * based on jquery.scrollfollow.js
- * Copyright (c) 2008 Net Perspective (http://kitchen.net-perspective.com/)
- * Licensed under the MIT License (http://www.opensource.org/licenses/mit-license.php)
- * original author R.A. Ray
  *
  * @projectDescription	jQuery plugin for vertically anchor an element as the user scrolls the page.
  * 
