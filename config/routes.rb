@@ -24,6 +24,8 @@ def rb_common_routes(rb)
                :to => 'rb_releases#destroy', :via => [:delete]
   rb_match rb, 'release/:release_id/edit',
                :to => 'rb_releases#edit', :via => [:get, :post]
+  rb_match rb, 'release/:release_id/update',
+               :to => 'rb_releases#update', :via => [:put]
   rb_match rb, 'release/:release_id/shapshot',
                :to => 'rb_releases#snapshot', :via => [:get]
 
@@ -99,6 +101,7 @@ ActionController::Routing::Routes.draw do |map|
     rb.resource   :task,             :except => :index,             :controller => :rb_tasks,           :as => "task/:id"
     rb.resources  :tasks,            :only => :index,               :controller => :rb_tasks,           :as => "tasks/:story_id"
     rb.resource   :taskboard,        :only => :show,                :controller => :rb_taskboards,      :as => "taskboards/:sprint_id"
+    rb.resource   :taskboard,        :only => :current,             :controller => :rb_taskboards,      :as => "projects/:project_id/taskboard"
 
     rb_common_routes rb
   end
@@ -123,6 +126,8 @@ else
 
   rb_match rb, 'taskboards/:sprint_id',
             :to => 'rb_taskboards#show'
+  rb_match rb, 'projects/:project_id/taskboard',
+            :to => 'rb_taskboards#current'
   end
 end
 
